@@ -12,13 +12,6 @@ function usage() {
     exit 1
 }
 
-# BUCKET_NAME='elasticsearch-snapshots-517285003183'
-# REGION='ap-southeast-1'
-# REPO_NAME='replication'
-
-# ES_URL=http://es-staging-in.honestbee.com
-# ES_REPLICA=http://es-staging-datateam.honestbee.com
-
 test "$BUCKET_NAME" != "" || usage
 test "$REGION" != "" || usage
 test "$REPO_NAME" != "" || usage
