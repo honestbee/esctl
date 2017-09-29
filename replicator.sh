@@ -27,7 +27,7 @@ function ensure_repo() {
     region=$3
     bucket=$4
 
-    status=`curl -s -w"%{http_code}" -o /dev/null $url/_snapshot/$repo`
+    status=`curl -w"%{http_code}" -o /dev/null $url/_snapshot/$repo`
 
     case $status in
         "200")
@@ -36,7 +36,7 @@ function ensure_repo() {
         "404")
             echo "Creating repo $url/_snapshot/$repo"
             payload="{\"type\": \"s3\", \"settings\": {\"bucket\": \"$bucket\", \"region\": \"$region\"}}"
-            curl -s -XPUT -H 'Content-Type: application/json' -d "$payload" "$url/_snapshot/$repo"
+            curl -XPUT -H 'Content-Type: application/json' -d "$payload" "$url/_snapshot/$repo"
             ;;
         *)
             echo "Unexpected http status code" 2>&1
@@ -60,11 +60,11 @@ echo "Snapshot repo: $REPO_NAME"
 # create snapshot
 echo "--"
 echo "Taking snapshot of $ES_URL"
-curl --fail -s $ES_URL/_snapshot/$REPO_NAME/$TSTAMP -XPUT > /dev/null
+curl --fail $ES_URL/_snapshot/$REPO_NAME/$TSTAMP -XPUT -o /dev/null
 
 echo "Waiting for snapshot to complete"
 while true; do
-    STATE=`curl --fail -s $ES_URL/_snapshot/$REPO_NAME/_all | jq -r ".snapshots[] | {id: .snapshot, state: .state}  | select(.id == \"$TSTAMP\").state"`
+    STATE=`curl --fail -sS $ES_URL/_snapshot/$REPO_NAME/_all | jq -r ".snapshots[] | {id: .snapshot, state: .state}  | select(.id == \"$TSTAMP\").state"`
 
     case $STATE in
         SUCCESS)
@@ -82,22 +82,22 @@ while true; do
     esac
 done
 
-INDICES=`curl --fail -s -H "Content-type: application/json" $ES_REPLICA/_cat/indices | jq -r '.[].index'`
+INDICES=`curl --fail -sS -H "Content-type: application/json" $ES_REPLICA/_cat/indices | jq -r '.[].index'`
 
 echo "--"
 echo "Closing indices on $ES_REPLICA"
 for IDX in $INDICES; do
     echo "Closing index $IDX"
-    curl --fail -s -XPOST $ES_REPLICA/$IDX/_close > /dev/null
+    curl --fail -sS -XPOST $ES_REPLICA/$IDX/_close -o /dev/null
 done
 
 echo "--"
 echo "Restoring snapshot $TSTAMP to $ES_REPLICA"
-curl -s --fail $ES_REPLICA/_snapshot/$REPO_NAME/$TSTAMP/_restore -H "content-type: application/json" -XPOST -d '{"include_global_state": false}' > /dev/null
+curl --fail -sS $ES_REPLICA/_snapshot/$REPO_NAME/$TSTAMP/_restore -H "content-type: application/json" -XPOST -d '{"include_global_state": false}' -o /dev/null
 
 echo "Restoration started"
 while true; do
-    CLUSTER_STATE=`curl --fail -s $ES_REPLICA/_cat/health -H "content-type: application/json" | jq -r '.[].status' | tail -n 1`
+    CLUSTER_STATE=`curl --fail -sS $ES_REPLICA/_cat/health -H "content-type: application/json" | jq -r '.[].status' | tail -n 1`
 
     case $CLUSTER_STATE in
         'green')
