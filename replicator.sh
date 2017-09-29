@@ -27,7 +27,7 @@ function ensure_repo() {
     region=$3
     bucket=$4
 
-    status=`curl -w"%{http_code}" -o /dev/null $url/_snapshot/$repo`
+    status=`curl -sS -w"%{http_code}" -o /dev/null $url/_snapshot/$repo`
 
     case $status in
         "200")
@@ -36,7 +36,7 @@ function ensure_repo() {
         "404")
             echo "Creating repo $url/_snapshot/$repo"
             payload="{\"type\": \"s3\", \"settings\": {\"bucket\": \"$bucket\", \"region\": \"$region\"}}"
-            curl -XPUT -H 'Content-Type: application/json' -d "$payload" "$url/_snapshot/$repo"
+            curl --fail -sS -XPUT -H 'Content-Type: application/json' -d "$payload" "$url/_snapshot/$repo"
             ;;
         *)
             echo "Unexpected http status code" 2>&1
@@ -60,7 +60,7 @@ echo "Snapshot repo: $REPO_NAME"
 # create snapshot
 echo "--"
 echo "Taking snapshot of $ES_URL"
-curl --fail $ES_URL/_snapshot/$REPO_NAME/$TSTAMP -XPUT -o /dev/null
+curl --fail -sS $ES_URL/_snapshot/$REPO_NAME/$TSTAMP -XPUT -o /dev/null
 
 echo "Waiting for snapshot to complete"
 while true; do
