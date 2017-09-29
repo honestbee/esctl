@@ -57,8 +57,6 @@ echo "To: $ES_REPLICA"
 echo "Snapshot id/Timestamp: $TSTAMP"
 echo "Snapshot repo: $REPO_NAME"
 
-exit 99
-
 # create snapshot
 echo "--"
 echo "Taking snapshot of $ES_URL"
