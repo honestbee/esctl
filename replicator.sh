@@ -2,11 +2,6 @@
 
 set -e
 
-RED='\033[0;31m'
-YELLOW='\033[0;33m'
-GREEN='\033[1;32m'
-NC='\033[0m'
-
 function usage() {
     echo "The following env vars must be set: BUCKET_NAME, REGION, REPO_NAME, ES_URL, ES_REPLICA" 2>&1
     exit 1
@@ -27,7 +22,7 @@ function ensure_repo() {
     region=$3
     bucket=$4
 
-    status=`curl -sS -w"%{http_code}" -o /dev/null $url/_snapshot/$repo`
+    status=`curl -s -w"%{http_code}" -o /dev/null $url/_snapshot/$repo`
 
     case $status in
         "200")
@@ -36,7 +31,7 @@ function ensure_repo() {
         "404")
             echo "Creating repo $url/_snapshot/$repo"
             payload="{\"type\": \"s3\", \"settings\": {\"bucket\": \"$bucket\", \"region\": \"$region\"}}"
-            curl --fail -sS -XPUT -H 'Content-Type: application/json' -d "$payload" "$url/_snapshot/$repo"
+            curl --fail -sS -XPUT -H 'Content-Type: application/json' -d "$payload" "$url/_snapshot/$repo" -o /dev/null
             ;;
         *)
             echo "Unexpected http status code" 2>&1
@@ -68,11 +63,11 @@ while true; do
 
     case $STATE in
         SUCCESS)
-            printf "\rSnapshot $TSTAMP complete\n"
+            echo "Snapshot $TSTAMP complete"
             break
             ;;
         IN_PROGRESS)
-            printf "\rState=$STATE, waiting..."
+            echo "."
             sleep 2
             ;;
         *)
@@ -101,16 +96,12 @@ while true; do
 
     case $CLUSTER_STATE in
         'green')
-            printf "\rCluster state is ${GREEN}$CLUSTER_STATE${NC}           \n"
+            printf "$CLUSTER_STATE - done"
             break
             ;;
-        'yellow')
-            printf "\rCluster state is ${YELLOW}$CLUSTER_STATE${NC}, waiting..."
-            sleep 2
-            ;;
-        'red')
-            printf "\rCluster state is ${RED}$CLUSTER_STATE${NC}, waiting...   "
-            sleep 2
+        'red' | 'yellow')
+            printf "$CLUSTER_STATE - waiting"
+            sleep 3
             ;;
         *)
             echo "Unexpected cluster state: '$CLUSTER_STATE' - exiting" 1>&2
@@ -119,4 +110,4 @@ while true; do
     esac
 done
 
-echo "Replication complete!"
+echo "Job complete"
