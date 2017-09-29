@@ -82,7 +82,7 @@ INDICES=`curl --fail -sS -H "Content-type: application/json" $ES_REPLICA/_cat/in
 echo "--"
 echo "Closing indices on $ES_REPLICA"
 for IDX in $INDICES; do
-    echo "Closing index $IDX"
+    echo "Index $IDX"
     curl --fail -sS -XPOST $ES_REPLICA/$IDX/_close -o /dev/null
 done
 
@@ -90,17 +90,17 @@ echo "--"
 echo "Restoring snapshot $TSTAMP to $ES_REPLICA"
 curl --fail -sS $ES_REPLICA/_snapshot/$REPO_NAME/$TSTAMP/_restore -H "content-type: application/json" -XPOST -d '{"include_global_state": false}' -o /dev/null
 
-echo "Restoration started"
+echo "Restoration started. Monitoring cluster state..."
 while true; do
     CLUSTER_STATE=`curl --fail -sS $ES_REPLICA/_cat/health -H "content-type: application/json" | jq -r '.[].status' | tail -n 1`
 
     case $CLUSTER_STATE in
         'green')
-            printf "$CLUSTER_STATE - done"
+            echo "State is $CLUSTER_STATE - done"
             break
             ;;
         'red' | 'yellow')
-            printf "$CLUSTER_STATE - waiting"
+            echo "State is $CLUSTER_STATE - waiting"
             sleep 3
             ;;
         *)
@@ -110,4 +110,5 @@ while true; do
     esac
 done
 
+echo "--"
 echo "Job complete"
