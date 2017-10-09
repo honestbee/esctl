@@ -67,8 +67,8 @@ while true; do
             break
             ;;
         IN_PROGRESS)
-            echo "."
-            sleep 2
+            echo "$STATE"
+            sleep 5
             ;;
         *)
             echo "Unexpected snapshot state: '$STATE' - exiting" 1>&2
