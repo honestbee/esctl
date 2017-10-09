@@ -11,18 +11,18 @@ spec:
           containers:
           - name: replicator
             imagePullPolicy: Always
-            image: registry.honestbee.com/honestbee/elasticsearch-replicator
+            image: ${IMAGE_NAME}
             env:
             - name: BUCKET_NAME
-              value: elasticsearch-snapshots-517285003183
+              value: ${BUCKET_NAME}
             - name: REGION
               value: ap-southeast-1
             - name: REPO_NAME
               value: replication
             - name: ES_URL
-              value: http://source-es-cluster.example.com
+              value: ${ES_URL}
             - name: ES_REPLICA
-              value: http://replica-es-cluster.example.com
+              value: ${ES_REPLICA}
           restartPolicy: OnFailure
           imagePullSecrets:
           - name: honestbee-registry
