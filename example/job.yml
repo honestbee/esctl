@@ -1,0 +1,27 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: es-replication
+spec:
+  template:
+    metadata:
+      name: es-replication
+    spec:
+      containers:
+      - name: replicator
+        imagePullPolicy: Always
+        image: registry.honestbee.com/honestbee/elasticsearch-replicator
+        env:
+        - name: BUCKET_NAME
+          value: elasticsearch-snapshots-517285003183
+        - name: REGION
+          value: ap-southeast-1
+        - name: REPO_NAME
+          value: replication
+        - name: ES_URL
+          value: http://source-es-cluster.example.com
+        - name: ES_REPLICA
+          value: http://replica-es-cluster.example.com
+      restartPolicy: Never
+      imagePullSecrets:
+        - name: honestbee-registry
