@@ -1,5 +1,5 @@
 pipeline:
   publish:
     image: plugins/docker
-    repo: registry.honestbee.com/honestbee/elasticsearch-snapper
+    repo: registry.honestbee.com/elasticsearch-snapper
     tags: 'latest'
