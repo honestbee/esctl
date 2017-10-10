@@ -1,20 +1,32 @@
 # Elasticsearch Replicator
 
-- Fork this repo
-- Build from Dockerfile
-- Or use drone build
-- Change image name in .drone.yml as needed to push to your own registry
+## Usage
 
-## AWS Credentials
-
-- The replication job does not need access to S3 itself
+- The replication job does not need AWS creds itself
 - However, the ES clusters doing the snapshotting/restoration do
 
-## Using the Samples
+Build:
+
+```sh
+docker build -t snapper .
+```
+
+Take snapshot:
+
+```sh
+docker run -it snapper snapshot --url $ES_URL --bucket-name $BUCKET_NAME --region $REGION
+```
+
+Restore from latest snapshot:
+
+```sh
+docker run -it snapper restore --url $ES_URL --bucket-name $BUCKET_NAME --region $REGION
+```
+
+## Kubernetes
 
 - Copy and edit the manifests in `example/` as needed, then `kubectl create -f ...`
-- Alternatively, via envsubst (part of gettext, `brew install gettext`)
-- Note: you need to `brew link --force gettext` as in [here](https://stackoverflow.com/a/37192554/853237)
+- Or using `envsubst` (part of `gettext`, on macOS [check this](https://stackoverflow.com/a/37192554/853237)):
 
 ```sh
 export ES_URL=http://es.example.com
