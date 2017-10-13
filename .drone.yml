@@ -12,6 +12,6 @@ pipeline:
     repo: registry.honestbee.com/elasticsearch-snapper
     registry: ${DOCKER_REGISTRY}
     secrets: [docker_username, docker_password, docker_registry]
-    tags: latest
+    tags: ${DRONE_TAG}
     when:
-      branch: nope
+      event: tag
