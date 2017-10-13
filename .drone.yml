@@ -2,4 +2,8 @@ pipeline:
   publish:
     image: plugins/docker
     repo: registry.honestbee.com/elasticsearch-snapper
+    registry: ${DOCKER_REGISTRY}
+    secrets: [docker_username, docker_password, docker_registry]
     tags: 'latest'
+    when:
+      branch: [master]
