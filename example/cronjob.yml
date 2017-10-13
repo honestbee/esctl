@@ -4,6 +4,8 @@ metadata:
   name: es-replication-cron
 spec:
   schedule: "@hourly"
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
   jobTemplate:
     spec:
       template:

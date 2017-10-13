@@ -16,12 +16,9 @@ spec:
           value: ${BUCKET_NAME}
         - name: REGION
           value: ap-southeast-1
-        - name: REPO_NAME
-          value: replication
-        - name: ES_URL
-          value: ${ES_URL}
-        - name: ES_REPLICA
-          value: ${ES_REPLICA}
+        - name: API_URL
+          value: ${API_URL}
+        args: ["restore", "--bucket-name", "$(BUCKET_NAME)", "--region", "$(REGION)", "--url", "$(API_URL)"]
       restartPolicy: Never
       imagePullSecrets:
         - name: honestbee-registry
