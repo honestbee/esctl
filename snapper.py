@@ -8,31 +8,38 @@ import json
 from uuid import uuid4
 import argparse
 import requests
-from dateutil.parser import parse as parse_date
+
+
+ACTION_SNAPSHOT = "snapshot"
+ACTION_RESTORE = "restore"
+ACTION_CLEANUP = "cleanup"
 
 
 def main():
     """Entry point"""
-
     parser = make_arg_parser()
     args = parser.parse_args()
-    args.func(args)
+    if not args.command:
+        parser.print_help()
+    elif args.command == "snapshot":
+        action_snapshot(args)
+    elif args.command == "restore":
+        action_restore(args)
+    else:
+        raise Exception("Invalid command: '"+args.command+"'")
 
 
 def make_arg_parser():
     """Set up command line args and returns the resulting ArgumentParser"""
 
     parser = argparse.ArgumentParser(description="Elasticsearch snapshot utility")
-
-    subparsers = parser.add_subparsers()
+    subparsers = parser.add_subparsers(help='command to execute', dest='command')
 
     parser_snapshot = subparsers.add_parser("snapshot")
-    parser_snapshot.set_defaults(func=action_snapshot)
-    common_args(parser_snapshot)
+    add_repo_args(parser_snapshot)
 
     parser_restore = subparsers.add_parser("restore")
-    parser_restore.set_defaults(func=action_restore)
-    common_args(parser_restore)
+    add_repo_args(parser_restore)
 
     parser_restore.add_argument("--snapshot", "--name", default="latest")
     parser_restore.add_argument("--wait-for", default="green", choices=("red", "yellow", "green"))
@@ -40,7 +47,7 @@ def make_arg_parser():
     return parser
 
 
-def common_args(parser):
+def add_repo_args(parser):
     """Add common args used by all sub parsers"""
 
     parser.add_argument("--bucket-name",
