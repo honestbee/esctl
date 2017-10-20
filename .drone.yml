@@ -3,15 +3,23 @@ pipeline:
     image: plugins/docker
     repo: registry.honestbee.com/elasticsearch-snapper
     registry: ${DOCKER_REGISTRY}
-    secrets: [docker_username, docker_password, docker_registry]
+    secrets:
+      - docker_username
+      - docker_password
+      - docker_registry
     tags: latest
     when:
-      branch: master
-  publish_stable:
+      branch: 
+        - master
+  publish_tags:
     image: plugins/docker
     repo: registry.honestbee.com/elasticsearch-snapper
     registry: ${DOCKER_REGISTRY}
-    secrets: [docker_username, docker_password, docker_registry]
-    tags: "1"
+    secrets:
+      - docker_username
+      - docker_password
+      - docker_registry
+    tags: ${DRONE_TAG##v}
     when:
-      branch: 1-stable
+      event:
+        - tag
