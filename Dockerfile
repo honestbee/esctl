@@ -1,5 +1,7 @@
 FROM alpine:3.6
 
+ENV PYTHONUNBUFFERED=yes
+
 RUN apk --no-cache add curl python3 \
  && python3 -m ensurepip \
  && pip3 install --upgrade pip
