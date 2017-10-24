@@ -1,11 +1,13 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: es-replication
+  name: es-replication-${TSTAMP}
 spec:
   template:
     metadata:
       name: es-replication
+      labels:
+        job: es-snapshot-${COMMAND}
     spec:
       containers:
       - name: replicator
@@ -18,7 +20,7 @@ spec:
           value: ap-southeast-1
         - name: API_URL
           value: ${API_URL}
-        args: ["restore", "--bucket-name", "$(BUCKET_NAME)", "--region", "$(REGION)", "--url", "$(API_URL)"]
+        args: ["${COMMAND}", "--bucket-name", "$(BUCKET_NAME)", "--region", "$(REGION)", "--url", "$(API_URL)"]
       restartPolicy: Never
       imagePullSecrets:
         - name: honestbee-registry

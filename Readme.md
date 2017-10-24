@@ -14,24 +14,35 @@ docker build -t snapper .
 Take snapshot:
 
 ```sh
-docker run -it snapper snapshot --url $ES_URL --bucket-name $BUCKET_NAME --region $REGION
+docker run -it snapper snapshot --url $API_URL --bucket-name $BUCKET_NAME --region $REGION
 ```
 
 Restore from latest snapshot:
 
 ```sh
-docker run -it snapper restore --url $ES_URL --bucket-name $BUCKET_NAME --region $REGION
+docker run -it snapper restore --url $API_URL --bucket-name $BUCKET_NAME --region $REGION
 ```
 
 ## Kubernetes
 
-- Copy and edit the manifests in `example/` as needed, then `kubectl create -f ...`
-- Or using `envsubst` (part of `gettext`, on macOS [check this](https://stackoverflow.com/a/37192554/853237)):
+- Make sure `kubectl config current-context` matches expectations
+- Set up your environment:
 
-```sh
-export ES_URL=http://es.example.com
-export ES_REPLICA=http://es-replica.example.com
-export IMAGE_NAME=http://registry.example.com/es-replicator
-export BUCKET_NAME=my-es-replication-bucket
-cat example/job.yml | envsubst | kubectl create -f -
-```
+    ```sh
+    export API_URL=http://es.example.com
+    export IMAGE_NAME=http://registry.example.com/es-snapper
+    export BUCKET_NAME=my-es-replication-bucket
+    ```
+
+- Take or restore snapshot:
+
+    ```sh
+    make snapshot
+    make restore
+    ```
+
+- To clean up old jobs:
+
+    ```sh
+    make cleanup
+    ```
