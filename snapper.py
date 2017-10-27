@@ -19,6 +19,7 @@ def main():
     """Entry point"""
     parser = make_arg_parser()
     args = parser.parse_args()
+
     if not args.command:
         parser.print_help()
     elif args.command == "snapshot":
@@ -62,6 +63,10 @@ def add_repo_args(parser):
     parser.add_argument("--url",
                         required=True,
                         help="URL of ES cluster to work on")
+    parser.add_argument("--wait-for-cluster",
+                        required=False,
+                        type=bool,
+                        default=False)
 
 
 def make_opts(args):
@@ -83,6 +88,9 @@ def make_headers():
 def action_snapshot(args):
     """Evaluate arguments and invoke snapshot operation"""
 
+    if args.wait_for_cluster:
+        wait_for_cluster(args.url)
+
     options = make_opts(args)
     name = str(uuid4())
 
@@ -91,6 +99,9 @@ def action_snapshot(args):
 
 def action_restore(args):
     """Evaluate arguments and invoke restore operation"""
+
+    if args.wait_for_cluster:
+        wait_for_cluster(args.url)
 
     options = make_opts(args)
     name = args.snapshot
@@ -221,6 +232,23 @@ def wait_for_status(cluster_url, expected_state="green"):
         data = res.json()
 
         if data[0]["status"] != expected_state:
+            time.sleep(5)
+        else:
+            break
+
+
+def wait_for_cluster(cluster_url):
+    """Probe cluster health endpoint, return only when status is 200"""
+
+    health_url = get_healthcheck_url(cluster_url)
+
+    print("Waiting for cluster to become available")
+
+    while True:
+        res = requests.get(health_url, headers=make_headers())
+        status_code = res.status_code
+        if status_code != 200:
+            print("Cluster response is "+str(status_code)+", waiting")
             time.sleep(5)
         else:
             break
