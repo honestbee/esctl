@@ -1,27 +1,30 @@
 # Elasticsearch Replicator
 
-## Usage
+## Preconditions
 
 - The replication job does not need AWS creds itself
 - However, the ES clusters doing the snapshotting/restoration do
+- S3 bucket must exist and the ES cluster must have AWS credentials allowing r/w access to it
 
-Build:
+## Usage
 
-```sh
-docker build -t snapper .
-```
+- Build:
 
-Take snapshot:
+    ```sh
+    make build
+    ```
 
-```sh
-docker run -it snapper snapshot --url $API_URL --bucket-name $BUCKET_NAME --region $REGION
-```
+- Take snapshot:
 
-Restore from latest snapshot:
+    ```sh
+    API_URL=<my-api-url> BUCKET_NAME=<my-bucket-name> REGION=<my-region> make snapshot
+    ```
 
-```sh
-docker run -it snapper restore --url $API_URL --bucket-name $BUCKET_NAME --region $REGION
-```
+- Restore from latest snapshot:
+
+    ```sh
+    API_URL=<my-api-url> BUCKET_NAME=<my-bucket-name> REGION=<my-region> make restore
+    ```
 
 ## Kubernetes
 
@@ -37,12 +40,13 @@ docker run -it snapper restore --url $API_URL --bucket-name $BUCKET_NAME --regio
 - Take or restore snapshot:
 
     ```sh
-    make snapshot
-    make restore
+    COMMAND=snapshot TSTAMP=`date +%s` envsubst < example/job.yml | kubectl create -f -
+    COMMAND=restore TSTAMP=`date +%s` envsubst < example/job.yml | kubectl create -f -
     ```
 
 - To clean up old jobs:
 
     ```sh
-    make cleanup
+    kubectl delete job -l job=es-snapshot-snapshot
+    kubectl delete job -l job=es-snapshot-restore
     ```

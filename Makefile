@@ -1,11 +1,19 @@
 COMMAND := "snapshot"
+REPO = $(shell git config --get remote.origin.url | awk -F":" '{print $$2}' | cut -d"." -f1)
 
-snapshot:
-	COMMAND=snapshot TSTAMP=`date +%s` envsubst < example/job.yml | kubectl create -f -
+snapshot: build
+	docker run --rm $(REPO) snapshot \
+		--url $(API_URL) \
+		--bucket-name $(BUCKET_NAME) \
+		--region $(REGION) \
+		--wait-for-cluster=True
 
-restore:
-	COMMAND=restore TSTAMP=`date +%s` envsubst < example/job.yml | kubectl create -f -
+restore: build
+	docker run --rm $(REPO) restore \
+		--url $(API_URL) \
+		--bucket-name $(BUCKET_NAME) \
+		--region $(REGION) \
+		--wait-for-cluster=True
 
-cleanup:
-	kubectl delete job -l job=es-snapshot-snapshot
-	kubectl delete job -l job=es-snapshot-restore
+build:
+	docker build -t $(REPO) .
