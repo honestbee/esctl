@@ -160,8 +160,10 @@ class Snapper:
         return self._check_status(res, expected)
 
 
-    def _check_status(self, res, expected=(200, 201), message="Unexpected response status"):
+    def _check_status(self, res, expected=(200, 201)):
         """Check if response status code is within expected values, of not raises an Exception"""
+        print(res)
+
         if expected is None:
             return res
         if isinstance(expected, int):
@@ -169,7 +171,7 @@ class Snapper:
 
         if res.status_code not in expected:
             print(res.text, file=sys.stderr)
-            raise Exception(message)
+            raise Exception("Unexpected response status ("+str(res.status_code)+")")
 
         return res
 
