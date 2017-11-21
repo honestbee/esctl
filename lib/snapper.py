@@ -162,8 +162,6 @@ class Snapper:
 
     def _check_status(self, res, expected=(200, 201)):
         """Check if response status code is within expected values, of not raises an Exception"""
-        print(res)
-
         if expected is None:
             return res
         if isinstance(expected, int):
