@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: es-snapshot-snapshot
+spec:
+  containers:
+  - name: snapper
+    imagePullPolicy: IfNotPresent
+    image: quay.io/honestbee/elasticsearch-snapper:v1.5.0
+    env:
+    - name: BUCKET_NAME
+      value: ${BUCKET_NAME}
+    - name: REGION
+      value: ap-southeast-1
+    - name: API_URL
+      value: ${API_URL}
+    args: ["snapshot", "--bucket-name", "$(BUCKET_NAME)", "--region", "$(REGION)", "--url", "$(API_URL)"]
+  restartPolicy: Never
