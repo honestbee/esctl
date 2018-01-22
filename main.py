@@ -2,9 +2,12 @@
 
 """Snapshot and restore utility for Elasticsearch"""
 
+from os import environ as env
 from lib.snapper import Snapper
 from lib.args import arg_parser, ACTION
-from os import environ as env
+
+
+BLACKLIST = ["http_password"]
 
 
 def main():
@@ -47,7 +50,12 @@ def _print_opts(opts):
     """Print options for debugging"""
     print("Options:")
     for key, value in opts.items():
-        print("  {}: {}".format(key, value))
+        if value is None:
+            continue
+        if key in BLACKLIST:
+            print("  {}: ******".format(key))
+        else:
+            print("  {}: {}".format(key, value))
 
 
 def _do_snapshot(snapper, opts):
