@@ -1,3 +1,4 @@
+"""Module implements a class to make snapshot requests against the Elasticsearch API"""
 
 import sys
 import time
@@ -5,19 +6,34 @@ import json
 from uuid import uuid4
 import requests
 
-def make_headers():
+def _mk_headers():
     """Generate the default headers for making requests to the ES API"""
     return {'Content-type': 'application/json'}
 
 
+def _mk_auth(options):
+    """Returns an implementation of `requests.auth.AuthBase` to authenticate with the server based
+    on given options. Will return None if no auth-specific options are present"""
+
+    if ("http_password" in options and options["http_password"] and
+            "http_user" in options and  options["http_password"]):
+        print("Using HTTP Basic auth")
+        return requests.auth.HTTPBasicAuth(options["http_user"], options["http_password"])
+    else:
+        print("No auth")
+        return None
+
+
 class Snapper:
-    """Tool to manage snapshots on a ES cluster"""
+    """Tool to manage snapshots on an ES cluster"""
 
     def __init__(self, options):
         self._cluster_url = options["url"]
         self._repo_name = options["repo_name"]
         self._bucket_name = options["bucket_name"]
         self._region = options["region"]
+
+        self._auth = _mk_auth(options)
 
         if "wait_for_cluster" in options:
             self._wait_for_cluster = True
@@ -130,33 +146,33 @@ class Snapper:
 
     def _do_get(self, url, expected=200):
         """Make a GET request"""
-        headers = make_headers()
-        res = requests.get(url, headers=headers)
+        headers = _mk_headers()
+        res = requests.get(url, headers=headers, auth=self._auth)
         return self._check_status(res, expected)
 
 
     def _do_put(self, url, payload=None, expected=200):
         """Make a PUT request"""
-        headers = make_headers()
+        headers = _mk_headers()
         if payload:
             payload = json.dumps(payload)
-        res = requests.put(url, data=payload, headers=headers)
+        res = requests.put(url, data=payload, headers=headers, auth=self._auth)
         return self._check_status(res, expected)
 
 
     def _do_post(self, url, payload=None, expected=(200, 201)):
         """Make a POST request"""
-        headers = make_headers()
+        headers = _mk_headers()
         if payload:
             payload = json.dumps(payload)
-        res = requests.post(url, data=payload, headers=headers)
+        res = requests.post(url, data=payload, headers=headers, auth=self._auth)
         return self._check_status(res, expected)
 
 
     def _do_delete(self, url, expected=200):
         """Make a DELETE request"""
-        headers = make_headers()
-        res = requests.delete(url, headers=headers)
+        headers = _mk_headers()
+        res = requests.delete(url, headers=headers, auth=self._auth)
         return self._check_status(res, expected)
 
 

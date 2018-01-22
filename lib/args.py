@@ -80,3 +80,11 @@ def _default_args(parser):
                         required=False,
                         dest='wait_for_cluster',
                         action='store_true')
+    parser.add_argument("--http-user",
+                        required=False,
+                        dest="http_user",
+                        help="HTTP Basic user if server requires auth")
+    parser.add_argument("--http-password",
+                        required=False,
+                        dest="http_password",
+                        help="HTTP Basic password if server requires auth")

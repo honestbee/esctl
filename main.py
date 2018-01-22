@@ -4,13 +4,14 @@
 
 from lib.snapper import Snapper
 from lib.args import arg_parser, ACTION
+from os import environ as env
 
 
 def main():
     """Entry point"""
     parser = arg_parser()
     args = parser.parse_args()
-    opts = vars(args)
+    opts = _get_opts(args)
 
     _print_opts(opts)
 
@@ -28,6 +29,18 @@ def main():
         _do_cleanup(snapper, opts)
     else:
         raise Exception("Invalid command: '"+args.command+"'")
+
+
+def _get_opts(args):
+    opts = vars(args)
+
+    # optionally use HTTP auth opts from env if not set via CLI
+    if opts["http_user"] is None and "HTTP_USER" in env:
+        opts["http_user"] = env["HTTP_USER"]
+    if opts["http_password"] is None and "HTTP_PASSWORD" in env:
+        opts["http_password"] = env["HTTP_PASSWORD"]
+
+    return opts
 
 
 def _print_opts(opts):

@@ -29,10 +29,13 @@ restore: build validate
 		--wait-for-cluster
 
 list: build validate 
-	docker run --rm $(IMAGE):$(VERSION) ls \
+	docker run \
+		--rm $(IMAGE):$(VERSION) ls \
 		--url $(ES_URL) \
 		--bucket-name $(SNAPSHOT_BUCKET) \
-		--region $(REGION)
+		--region $(REGION) \
+		# --http-user $(HTTP_USER) \
+		# --http-password $(HTTP_PASSWD)
 
 cleanup: build validate 
 	docker run --rm $(IMAGE):$(VERSION) cleanup \
