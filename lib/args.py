@@ -76,10 +76,6 @@ def _default_args(parser):
     parser.add_argument("--url",
                         required=True,
                         help="URL of ES cluster to work on")
-    parser.add_argument("--wait-for-cluster",
-                        required=False,
-                        dest='wait_for_cluster',
-                        action='store_true')
     parser.add_argument("--http-user",
                         required=False,
                         dest="http_user",

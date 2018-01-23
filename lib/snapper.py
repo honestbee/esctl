@@ -5,6 +5,7 @@ import time
 import json
 from uuid import uuid4
 import requests
+from retrying import retry
 
 def _mk_headers():
     """Generate the default headers for making requests to the ES API"""
@@ -35,16 +36,8 @@ class Snapper:
 
         self._auth = _mk_auth(options)
 
-        if "wait_for_cluster" in options:
-            self._wait_for_cluster = True
-
-
     def snapshot(self):
         """Do a snapshot"""
-
-        # Wait for cluster to become available
-        if self._wait_for_cluster:
-            self._do_wait_for_cluster()
 
         name = str(uuid4())
         repo_url = self._repo_url()
@@ -118,6 +111,7 @@ class Snapper:
 
     def list_snapshots(self, sort_reverse=False):
         """List all snapshots"""
+
         repo_url = self._repo_url()
         self._ensure_repo()
 
@@ -144,36 +138,34 @@ class Snapper:
             print("Snapshot {} from {} deleted".format(snap["snapshot"], snap["start_time"]))
 
 
+    @retry(stop_max_attempt_number=20, wait_exponential_multiplier=1000, wait_exponential_max=10000)
+    def _do_request(self, method, url, payload=None, expected=200):
+        """Make a generic request"""
+        headers = _mk_headers()
+        data = json.dumps(payload) if payload else None
+
+        res = requests.request(method, url, data=data, headers=headers, auth=self._auth)
+        return self._check_status(res, expected)
+
+
     def _do_get(self, url, expected=200):
         """Make a GET request"""
-        headers = _mk_headers()
-        res = requests.get(url, headers=headers, auth=self._auth)
-        return self._check_status(res, expected)
+        return self._do_request("get", url, expected=expected)
 
 
     def _do_put(self, url, payload=None, expected=200):
         """Make a PUT request"""
-        headers = _mk_headers()
-        if payload:
-            payload = json.dumps(payload)
-        res = requests.put(url, data=payload, headers=headers, auth=self._auth)
-        return self._check_status(res, expected)
+        return self._do_request("put", url, payload=payload, expected=expected)
 
 
     def _do_post(self, url, payload=None, expected=(200, 201)):
         """Make a POST request"""
-        headers = _mk_headers()
-        if payload:
-            payload = json.dumps(payload)
-        res = requests.post(url, data=payload, headers=headers, auth=self._auth)
-        return self._check_status(res, expected)
+        return self._do_request("post", url, payload=payload, expected=expected)
 
 
     def _do_delete(self, url, expected=200):
         """Make a DELETE request"""
-        headers = _mk_headers()
-        res = requests.delete(url, headers=headers, auth=self._auth)
-        return self._check_status(res, expected)
+        return self._do_request("delete", url, expected=expected)
 
 
     def _check_status(self, res, expected=(200, 201)):
@@ -266,24 +258,6 @@ class Snapper:
             if data[0]["status"] != expected_state:
                 time.sleep(5)
             else:
-                break
-
-
-    def _do_wait_for_cluster(self):
-        """Probe cluster health endpoint, return only when status is 200"""
-
-        health_url = self._healthcheck_url()
-
-        print("Waiting for cluster to become available")
-
-        while True:
-            res = self._do_get(health_url, expected=None)
-            status_code = res.status_code
-            if status_code != 200:
-                print("Cluster response is "+str(status_code)+", waiting")
-                time.sleep(5)
-            else:
-                print("Cluster available")
                 break
 
 
