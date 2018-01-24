@@ -7,6 +7,13 @@ from uuid import uuid4
 import requests
 from retrying import retry
 
+# Setting to control exponential backoff behaviour for failed API calls. 
+# See https://github.com/rholder/retrying
+BACKOFF_MULTIPLIER = 1000
+BACKOFF_EXP_MAX = 2<<6 * 2000 # 256000ms = ~4.3m
+BACKOFF_MAX_RETRIES = 10
+
+
 def _mk_headers():
     """Generate the default headers for making requests to the ES API"""
     return {'Content-type': 'application/json'}
@@ -138,7 +145,9 @@ class Snapper:
             print("Snapshot {} from {} deleted".format(snap["snapshot"], snap["start_time"]))
 
 
-    @retry(stop_max_attempt_number=20, wait_exponential_multiplier=1000, wait_exponential_max=10000)
+    @retry(stop_max_attempt_number=BACKOFF_MAX_RETRIES,
+           wait_exponential_multiplier=BACKOFF_MULTIPLIER,
+           wait_exponential_max=BACKOFF_EXP_MAX)
     def _do_request(self, method, url, payload=None, expected=200):
         """Make a generic request"""
         headers = _mk_headers()
