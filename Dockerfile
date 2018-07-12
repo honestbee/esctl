@@ -9,11 +9,11 @@ RUN apk --no-cache add curl python3 \
 COPY requirements.txt /tmp
 RUN pip3 install -r /tmp/requirements.txt
 
-COPY main.py /src/snapper
+COPY main.py /src/esctl
 COPY lib/ /src/lib
 
-RUN adduser -DH snapper
-USER snapper
+RUN adduser -DH esctl
+USER esctl
 
-ENTRYPOINT ["/src/snapper"]
+ENTRYPOINT ["/src/esctl"]
 CMD ["-h"]
