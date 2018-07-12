@@ -25,11 +25,16 @@ class Cluster:
         )
 
 
-    def toggle_rebalancing(self, enable):
-        """Set cluster wide shard rebalancing to on or off"""
-
-        val = "all" if enable else "none"
-        payload = {"transient": {"cluster.routing.allocation.enable": val}}
-
-        data, _ = self._client.do_put("/_cluster/settings", payload)
+    def settings(self, key, value):
+        """Modify cluster settings"""
+        if key is None:
+            data, _ = self._client.do_get("/_cluster/settings")
+        else:
+            payload = {"transient": {key: value}}
+            data, _ = self._client.do_put("/_cluster/settings", payload)
         return data
+
+
+    def toggle_rebalancing(self, value):
+        """Set cluster wide shard rebalancing to on or off"""
+        return self.settings("cluster.routing.allocation.enable", value)

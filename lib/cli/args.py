@@ -15,7 +15,8 @@ ACTION = dict(
     SNAPSHOT_RESTORE="restore",
     SNAPSHOT_CLEANUP="cleanup",
     SNAPSHOT_LIST="ls",
-    CLUSTER_REBALANCE="rebalancing",
+    CLUSTER_SETTINGS="settings",
+    CLUSTER_REBALANCING="rebalancing",
     CLUSTER_STATUS="status",
 )
 
@@ -75,11 +76,22 @@ def arg_parser():
                             required=False,
                             type=int)
 
-    # Cluster - rebalancing
-    p_rebalance = sp_cluster.add_parser(ACTION["CLUSTER_REBALANCE"], parents=[default_args])
+    # Cluster - settings
+    p_rebalance = sp_cluster.add_parser(ACTION["CLUSTER_SETTINGS"], parents=[default_args])
+    p_rebalance.add_argument("--key",
+                            required=False,
+                            type=str)
     p_rebalance.add_argument("--value",
+                            required=False,
+                            type=str)
+
+    sp_cluster.add_parser(ACTION["CLUSTER_STATUS"], parents=[default_args])
+
+    # Cluster - rebalancing
+    p_rebalance = sp_cluster.add_parser(ACTION["CLUSTER_REBALANCING"], parents=[default_args])
+    p_rebalance.add_argument("--value",
+                            choices=["all", "primaries", "new_primaries", "none"],
                             required=True,
-                            choices=["on", "off"],
                             type=str)
 
     sp_cluster.add_parser(ACTION["CLUSTER_STATUS"], parents=[default_args])
