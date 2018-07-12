@@ -15,14 +15,12 @@ ACTION = dict(
     SNAPSHOT_RESTORE="restore",
     SNAPSHOT_CLEANUP="cleanup",
     SNAPSHOT_LIST="ls",
-    CLUSTER_REBALANCE="rebalancing"
+    CLUSTER_REBALANCE="rebalancing",
+    CLUSTER_STATUS="status",
 )
 
 
-BLACKLIST = ["http_password"]
-
-
-DEFAULT_KEEP = 5
+DEFAULT_KEEP = "5"
 
 
 def arg_parser():
@@ -34,7 +32,7 @@ def arg_parser():
     parser = argparse.ArgumentParser(description="Elasticsearch snapshot utility")
 
     sp_main = parser.add_subparsers(help="Command group to execute", dest="group")
-    
+
     p_snapshots = sp_main.add_parser(GROUP["SNAPSHOT"])
     p_cluster = sp_main.add_parser(GROUP["CLUSTER"])
 
@@ -50,9 +48,9 @@ def arg_parser():
                             dest="cleanup",
                             action="store_true")
     p_snapshot.add_argument("--keep",
+                            default=DEFAULT_KEEP,
                             required=False,
-                            type=int,
-                            default=DEFAULT_KEEP)
+                            type=int)
 
     # Snapshot - Restore command
     p_restore = sp_snapshots.add_parser(ACTION["SNAPSHOT_RESTORE"], parents=[default_args, snapshot_args])
@@ -69,78 +67,63 @@ def arg_parser():
 
     # Snapshot - List command
     sp_snapshots.add_parser(ACTION["SNAPSHOT_LIST"], parents=[default_args, snapshot_args])
-    
+
     # Snapshot - Cleanup command
     p_cleanup = sp_snapshots.add_parser(ACTION["SNAPSHOT_CLEANUP"], parents=[default_args, snapshot_args])
     p_cleanup.add_argument("--keep",
+                            default=DEFAULT_KEEP,
                             required=False,
-                            type=int,
-                            default=DEFAULT_KEEP)
+                            type=int)
 
     # Cluster - rebalancing
     p_rebalance = sp_cluster.add_parser(ACTION["CLUSTER_REBALANCE"], parents=[default_args])
     p_rebalance.add_argument("--value",
-                            required=False,
+                            required=True,
+                            choices=["on", "off"],
                             type=str)
+
+    sp_cluster.add_parser(ACTION["CLUSTER_STATUS"], parents=[default_args])
 
     return parser
 
 
 def _snapshot_parser():
-    """Add args required for ES snapshots"""
+    """Args required for ES snapshots"""
+
     parser = argparse.ArgumentParser(add_help=False)
 
-    parser.add_argument("--bucket-name",
+    parser.add_argument("--bucket",
                         required=True,
                         help="S3 Bucket name (must exist)")
     parser.add_argument("--region",
                         required=True,
                         help="AWS region to use")
-    parser.add_argument("--repo-name",
+    parser.add_argument("--repo",
                         default="snapper-snapshots",
+                        required=False,
                         help="Name of the repo to use")
 
     return parser
 
 
 def _default_parser():
-    """Add common args used by all sub parsers"""
+    """Common args used by all sub parsers"""
+
     parser = argparse.ArgumentParser(add_help=False)
-    
+
     parser.add_argument("--url",
                         required=True,
                         help="URL of ES cluster to work on")
-    
+
     parser.add_argument("--http-user",
+                        default=env.get("HTTP_USER"),
                         required=False,
                         dest="http_user",
                         help="HTTP Basic user if server requires auth")
     parser.add_argument("--http-password",
+                        default=env.get("HTTP_PASSWORD"),
                         required=False,
                         dest="http_password",
                         help="HTTP Basic password if server requires auth")
 
     return parser
-
-
-def extra_opts(args):
-    opts = vars(args)
-
-    # optionally use HTTP auth opts from env if not set via CLI
-    if opts["http_user"] is None and "HTTP_USER" in env:
-        opts["http_user"] = env["HTTP_USER"]
-    if opts["http_password"] is None and "HTTP_PASSWORD" in env:
-        opts["http_password"] = env["HTTP_PASSWORD"]
-
-    return opts
-
-def print_opts(opts):
-    """Print options for debugging"""
-    print("Options:")
-    for key, value in opts.items():
-        if value is None:
-            continue
-        if key in BLACKLIST:
-            print("  {}: ******".format(key))
-        else:
-            print("  {}: {}".format(key, value))

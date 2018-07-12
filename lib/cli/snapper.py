@@ -1,11 +1,12 @@
 """Bridge between CLI and snapshot level actions"""
 
-from lib.snapper import Snapper
+from lib.es.snapper import new_snapper
 from lib.cli.args import ACTION
 
 
 def snapshot_action(action, opts):
-    snapper = Snapper(opts)
+
+    snapper = new_snapper(opts)
 
     if action == ACTION["SNAPSHOT_CREATE"]:
         _do_snapshot(snapper, opts)
@@ -21,6 +22,9 @@ def snapshot_action(action, opts):
 
 def _do_snapshot(snapper, opts):
     """Do snapshot"""
+    snapper.snapshot()
+    if opts["cleanup"]:
+        snapper.cleanup(keep=opts["keep"])
 
 
 def _do_list(snapper):
