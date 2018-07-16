@@ -1,52 +1,70 @@
-# Elasticsearch Replicator
+# esctl -  Elasticsearch Toolkit
 
-## Preconditions
+## Building
 
-- The replication job does not need AWS creds itself
-- However, the ES clusters doing the snapshotting/restoration do
-- S3 bucket must exist and the ES cluster must have AWS credentials allowing r/w access to it
+Setup venv and install dependencies:
+
+```sh
+virtualenv venv
+. venv/bin/activate
+pip install -r requirements.txt
+./main.py
+```
+
+Or build and run Docker image:
+
+```sh
+make build
+docker run honestbee/esctl:latest
+```
 
 ## Usage
 
-- Build:
+Run without params or `./main.py -h` for help on all available commands/command groups. Common parameters:
 
-    ```sh
-    make build
-    ```
+| Flag              | Env Var         | Meaning                                         |
+|-------------------|-----------------|-------------------------------------------------|
+| `--url`           |                 | Base URL of ES cluster                          |
+| `--http-user`     | `HTTP_USER`     | HTTP user for basic auth if required by cluster |
+| `--http-password` | `HTTP_PASSWORD` | Password for basic auth, if required            |
 
-- Take snapshot:
+### Cluster
 
-    ```sh
-    API_URL=<my-api-url> BUCKET_NAME=<my-bucket-name> REGION=<my-region> make snapshot
-    ```
+Cluster info:
 
-- Restore from latest snapshot:
+```sh
+./main.py cluster info --url $URL
+```
 
-    ```sh
-    API_URL=<my-api-url> BUCKET_NAME=<my-bucket-name> REGION=<my-region> make restore
-    ```
+Change cluster settings (e.g. shard rebalancing):
 
-## Kubernetes
+```sh
+./main.py cluster settings --url $URL --key=cluster.routing.allocation.enable --value=all
+```
 
-- Make sure `kubectl config current-context` matches expectations
-- Set up your environment:
+### Snapshots
 
-    ```sh
-    export API_URL=http://es.example.com
-    export IMAGE_NAME=http://registry.example.com/es-snapper
-    export BUCKET_NAME=my-es-replication-bucket
-    ```
+For S3 snapshots, an existing buckets name must be passed to the CLU, but AWS IAM credentials need 
+to be provided to the cluster, _not_ to `esctl`.
 
-- Take or restore snapshot:
+List snapshots:
 
-    ```sh
-    COMMAND=snapshot TSTAMP=`date +%s` envsubst < example/job.yml | kubectl create -f -
-    COMMAND=restore TSTAMP=`date +%s` envsubst < example/job.yml | kubectl create -f -
-    ```
+```sh
+./main.py snapshot ls --url=$URL --bucket=$BUCKET --region=$REGION
+```
 
-- To clean up old jobs:
+Take new snapshot:
 
-    ```sh
-    kubectl delete job -l job=es-snapshot-snapshot
-    kubectl delete job -l job=es-snapshot-restore
-    ```
+```sh
+./main.py snapshot create --url=$URL --bucket=$BUCKET --region=$REGION
+```
+
+Restore from (latest) snapshot:
+
+Take new snapshot:
+
+```sh
+./main.py snapshot restore --url=$URL --bucket=$BUCKET --region=$REGION
+```
+
+For each subcommand, use the `-h` for additional snapshots.
