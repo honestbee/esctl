@@ -38,10 +38,6 @@ class Client:
         self._cluster_url = options["url"]
         self._auth = _mk_auth(options)
 
-
-    @retry(stop_max_attempt_number=BACKOFF_MAX_RETRIES,
-        wait_exponential_multiplier=BACKOFF_MULTIPLIER,
-        wait_exponential_max=BACKOFF_EXP_MAX)
     def do_request(self, method, path, payload=None, expected=200):
         """Make a generic request"""
         headers = _mk_headers()
@@ -50,7 +46,6 @@ class Client:
 
         res = requests.request(method, url, data=data, headers=headers, auth=self._auth)
         return self._validate_response(res, expected)
-
 
     def do_get(self, url, expected=200):
         """Make a GET request"""
