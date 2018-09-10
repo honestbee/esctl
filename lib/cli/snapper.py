@@ -1,34 +1,18 @@
 """Bridge between CLI and snapshot level actions"""
 
 from lib.es.snapper import new_snapper
-from lib.cli.args import ACTION
 
-
-def snapshot_action(action, opts):
-
-    snapper = new_snapper(opts)
-
-    if action == ACTION["SNAPSHOT_CREATE"]:
-        _do_snapshot(snapper, opts)
-    elif action == ACTION["SNAPSHOT_RESTORE"]:
-        _do_restore(snapper, opts)
-    elif action == ACTION["SNAPSHOT_LIST"]:
-        _do_list(snapper)
-    elif action == ACTION["SNAPSHOT_CLEANUP"]:
-        _do_cleanup(snapper, opts)
-    else:
-        raise Exception("Invalid action '{}'".format(action))
-
-
-def _do_snapshot(snapper, opts):
+def create(keep, cleanup, **args):
     """Do snapshot"""
+    snapper = _from_args(**args)
     snapper.snapshot()
-    if opts["cleanup"]:
-        snapper.cleanup(keep=opts["keep"])
+    if cleanup: 
+        snapper.cleanup(keep)
 
 
-def _do_list(snapper):
+def ls(**args):
     """Do list"""
+    snapper = _from_args(**args)
     snapshots = snapper.list_snapshots()
     for snap in snapshots:
         print("- snapshot: {}".format(snap["snapshot"]))
@@ -39,14 +23,23 @@ def _do_list(snapper):
         print("  state: {}".format(snap["state"]))
 
 
-def _do_restore(snapper, opts):
+def restore(snapshot="latest", ignore_missing=True, wait_for="green", **args):
     """Do restore"""
-    name = opts["snapshot"] if "snapshot" in opts else "latest"
-    ignore_missing = opts["ignore_missing"]
-    wait_for = opts["wait_for"]
-    snapper.restore(name, ignore_missing=ignore_missing, wait_for=wait_for)
+    snapper = _from_args(**args)
+    snapper.restore(snapshot, ignore_missing, wait_for)
 
 
-def _do_cleanup(snapper, opts):
-    keep = opts["keep"]
-    snapper.cleanup(keep=keep)
+def cleanup(keep, **args):
+    """Cleanup old snapshots"""
+    snapper = _from_args(**args)
+    snapper.cleanup(keep)
+
+
+def _from_args(**args):
+    return new_snapper(
+        url=args["url"], 
+        user=args["user"],
+        repo=args["repo"],
+        bucket=args["bucket"],
+        region=args["region"],
+        password=args["password"])

@@ -7,26 +7,18 @@ from retrying import retry
 from urllib.parse import urljoin
 
 
-# Setting to control exponential backoff behaviour for failed API calls. 
-# See https://github.com/rholder/retrying
-BACKOFF_MULTIPLIER = 1000
-BACKOFF_EXP_MAX = 2<<6 * 2000 # 256000ms = ~4.3m
-BACKOFF_MAX_RETRIES = 10
-
-
 def _mk_headers():
     """Generate the default headers for making requests to the ES API"""
     return {'Content-type': 'application/json'}
 
 
-def _mk_auth(options):
+def _mk_auth(user=None, password=None):
     """Returns an implementation of `requests.auth.AuthBase` to authenticate with the server based
     on given options. Will return None if no auth-specific options are present"""
 
-    if ("http_password" in options and options["http_password"] and
-            "http_user" in options and  options["http_password"]):
+    if (user is not None and password is not None):
         print("Using HTTP Basic auth")
-        return requests.auth.HTTPBasicAuth(options["http_user"], options["http_password"])
+        return requests.auth.HTTPBasicAuth(user, password)
     else:
         return None
 
@@ -34,9 +26,12 @@ def _mk_auth(options):
 class Client:
     """Base ES client implementation"""
 
-    def __init__(self, options):
-        self._cluster_url = options["url"]
-        self._auth = _mk_auth(options)
+    def __init__(self, url, user=None, password=None):
+        if url is None:
+            raise Exception("Cluster URL must be provided")
+        self._cluster_url = url
+        self._auth = _mk_auth(user, password)
+
 
     def do_request(self, method, path, payload=None, expected=200):
         """Make a generic request"""
@@ -46,6 +41,7 @@ class Client:
 
         res = requests.request(method, url, data=data, headers=headers, auth=self._auth)
         return self._validate_response(res, expected)
+
 
     def do_get(self, url, expected=200):
         """Make a GET request"""

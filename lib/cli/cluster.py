@@ -1,24 +1,11 @@
 """Bridge between CLI and cluster level actions"""
 
 from lib.es.cluster import new_cluster
-from lib.cli.args import ACTION
 import json
 
-def cluster_action(action, opts):
-    
-    cluster = new_cluster(opts)
 
-    if action == ACTION["CLUSTER_STATUS"]:
-        _do_cluster_status(cluster, opts)
-    elif action == ACTION["CLUSTER_SETTINGS"]:
-        _do_cluster_settings(cluster, opts)
-    elif action == ACTION["CLUSTER_REBALANCING"]:
-        _do_cluster_toggle_rebalancing(cluster, opts)
-    else:
-        raise Exception("Invalid action '{}'".format(action))
-
-
-def _do_cluster_status(cluster, opts):
+def status(**args):
+    cluster = _from_args(**args)
     status = cluster.status()
     print("Cluster name:       {}".format(status["cluster_name"]))
     print("Cluster status:     {}".format(status["status"]))
@@ -28,26 +15,31 @@ def _do_cluster_status(cluster, opts):
     print("Pending tasks:      {}".format(status["number_of_pending_tasks"]))
 
 
-def _do_cluster_toggle_rebalancing(cluster, opts):
-    if "value" in opts:
-        value = opts["value"]
+def set_rebalancing(value, **args):
+    cluster = _from_args(**args)
     data = cluster.toggle_rebalancing(value)
-    _print_cluster_response(data)
+    _print_response(data)
 
 
-def _do_cluster_settings(cluster, opts):
-    value = None
-    key = None
-
-    if "value" in opts:
-        value = opts["value"]
-    if "key" in opts:
-        key = opts["key"]
-    
-    data = cluster.settings(key, value)
-    _print_cluster_response(data)
+def settings_set(key, value, transient, **args):
+    cluster = _from_args(**args)
+    print(key, value, transient)
+    data = cluster.settings_set(key, value, transient)
+    _print_response(data)
 
 
-def _print_cluster_response(data):
-    print("Response from cluster:")
+def settings(**args):
+    cluster = _from_args(**args)
+    data = cluster.settings_get()
+    _print_response(data)
+
+
+def _from_args(**args):
+    return new_cluster(
+        args["url"], 
+        args["user"], 
+        args["password"])
+
+
+def _print_response(data):
     print(json.dumps(data, sort_keys=True, indent=2))

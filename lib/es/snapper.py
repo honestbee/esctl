@@ -9,9 +9,9 @@ from retrying import retry
 from lib.es.client import Client
 
 
-def new_snapper(options):
-    client = Client(options)
-    snapper = Snapper(client, options)
+def new_snapper(url, repo, bucket, region, user, password):
+    client = Client(url, user, password)
+    snapper = Snapper(client, repo, bucket, region)
     return snapper
 
 
@@ -19,11 +19,11 @@ class Snapper:
     """Tool to manage snapshots on an ES cluster"""
 
 
-    def __init__(self, es_client, options):
+    def __init__(self, es_client, repo="snapper-snapshots", bucket=None, region=None):
         self._client = es_client
-        self._repo_name = options["repo"]
-        self._bucket_name = options["bucket"]
-        self._region = options["region"]
+        self._repo_name = repo
+        self._bucket_name = bucket
+        self._region = region
 
 
     def snapshot(self):
@@ -128,13 +128,22 @@ class Snapper:
         """Ensure the elasticsearch snapshot repo at the given url actually exists, if it doesn't,
         create it"""
 
-        print("Ensure repo {} exists".format(self._repo_name))
-
         repo_url = "_snapshot/{}".format(self._repo_name)
         _, res = self._client.do_get(repo_url, expected=(200, 404))
 
         if res.status_code == 404:
-            print("Creating snapshot repository")
+            print("Snapshot repo '{}' does not exist, trying to create it".format(self._repo_name))
+            self._create_repo(repo_url)
+        else:
+            print("Snapshot repo '{}' already exists".format(self._repo_name))
+
+
+    def _create_repo(self, repo_url):
+            if self._bucket_name is None:   
+                raise Exception("Value for `bucket` is not provided")
+            if self._region is None:
+                raise Exception("Value for `region` is not provided")
+
             settings = {
                 "type": "s3",
                 "settings": {
@@ -144,8 +153,6 @@ class Snapper:
             }
             self._client.do_put(repo_url, payload=settings)
             print("Repo created")
-        else:
-            print("Repo already exists")
 
 
     def _find_latest_snapshot(self):

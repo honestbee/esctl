@@ -1,14 +1,15 @@
 from lib.es.client import Client
 import json
 
-def new_cluster(opts):
-    client = Client(opts)
-    cluster = Cluster(client, opts)
+def new_cluster(url, user=None, password=None):
+    client = Client(url, user, password)
+    cluster = Cluster(client)
     return cluster
+    
 
 class Cluster:
 
-    def __init__(self, es_client, opts):
+    def __init__(self, es_client):
         self._client = es_client
 
     
@@ -25,13 +26,17 @@ class Cluster:
         )
 
 
-    def settings(self, key, value):
+    def settings_set(self, key, value, transient=False):
         """Modify cluster settings"""
-        if key is None:
-            data, _ = self._client.do_get("/_cluster/settings")
-        else:
-            payload = {"transient": {key: value}}
-            data, _ = self._client.do_put("/_cluster/settings", payload)
+        payload = {}
+        payload["persistent" if not transient else "transient"] = {key: value}
+        data, _ = self._client.do_put("/_cluster/settings", payload)
+        return data
+
+
+    def settings_get(self):
+        """Get cluster wide value"""
+        data, _ = self._client.do_get("/_cluster/settings")
         return data
 
 

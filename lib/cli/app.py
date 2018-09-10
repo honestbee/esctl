@@ -1,43 +1,28 @@
 """Commandline interface"""
 
-from lib.cli import args
-from lib.cli.snapper import snapshot_action
-from lib.cli.cluster import cluster_action
+from lib.cli.arg_parser import arg_parser
+import json
 
 
-BLACKLIST = ["http_password"]
+SENSITIVE = ["http_password"]
 
 
 def run():
-
-    parser = args.arg_parser()
-    opts = vars(parser.parse_args())
-
-    print_args(opts)
-
-    if "action" not in opts or "group" not in opts:
-        parser.print_help()
-        return
-
-    group = opts["group"]
-    action = opts["action"]
-
-    if group == args.GROUP["SNAPSHOT"]:
-        snapshot_action(action, opts)
-    elif group == args.GROUP["CLUSTER"]:
-        cluster_action(action, opts)
-    else:
-        raise Exception("Invalid action group '{}'".format(opts.group))
+    parser = arg_parser()
+    args = parser.parse_args()
+    if "debug" in args and args.debug:
+        print_args(args)
+    args.func(**vars(args))
 
 
 def print_args(args):
     """Print options for debugging"""
-    print("Options:")
-    for key, value in args.items():
-        if value is None:
+    hsh = {}
+    for key, value in vars(args).items():
+        if value is None or key == "func":
             continue
-        if key in BLACKLIST:
-            print("  {}: ******".format(key))
+        if key in SENSITIVE:
+            hsh[key] = "*****"
         else:
-            print("  {}: {}".format(key, value))
-    print() # empty line
+            hsh[key] = value
+    print(json.dumps(dict(options=hsh)))
