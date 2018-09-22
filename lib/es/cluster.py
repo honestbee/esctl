@@ -42,4 +42,4 @@ class Cluster:
 
     def toggle_rebalancing(self, value):
         """Set cluster wide shard rebalancing to on or off"""
-        return self.settings("cluster.routing.allocation.enable", value)
+        return self.settings_set("cluster.routing.allocation.enable", value)
