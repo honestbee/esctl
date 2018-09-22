@@ -12,7 +12,10 @@ def run():
     args = parser.parse_args()
     if "debug" in args and args.debug:
         print_args(args)
-    args.func(**vars(args))
+    if "func" not in args:
+        parser.print_help()
+    else:
+        args.func(**vars(args))
 
 
 def print_args(args):
